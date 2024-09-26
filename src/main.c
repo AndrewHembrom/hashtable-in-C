@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "hash_table.h"
+#include "prime.h"
 
 int main() {
     // Create a new hash table

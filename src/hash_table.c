@@ -1,12 +1,52 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <math.h>
-
 #include "hash_table.h"
+#include "prime.h"
 
 static int HT_INITIAL_BASE_SIZE = 53;
 static int HT_PRIME_1 = 151;
 static int HT_PRIME_2 = 163;
+static ht_item HT_DELETED_ITEM = {NULL, NULL};
+
+static void ht_resize(ht_hash_table* ht, const int base_size) {
+    if (base_size < HT_INITIAL_BASE_SIZE) {
+        return;
+    }
+    ht_hash_table* new_ht = ht_new_sized(base_size);
+    for (int i = 0; i < ht->size; i++) {
+        ht_item* item = ht->items[i];
+        if (item != NULL && item != &HT_DELETED_ITEM) {
+            ht_insert(new_ht, item->key, item->value);
+        }
+    }
+
+    ht->base_size = new_ht->base_size;
+    ht->count = new_ht->count;
+
+    // To delete new_ht, we give it ht's size and items 
+    const int tmp_size = ht->size;
+    ht->size = new_ht->size;
+    new_ht->size = tmp_size;
+
+    ht_item** tmp_items = ht->items;
+    ht->items = new_ht->items;
+    new_ht->items = tmp_items;
+
+    ht_del_hash_table(new_ht);
+}
+
+static void ht_resize_up(ht_hash_table* ht) {
+    const int new_size = ht->base_size * 2;
+    ht_resize(ht, new_size);
+}
+
+
+static void ht_resize_down(ht_hash_table* ht) {
+    const int new_size = ht->base_size / 2;
+    ht_resize(ht, new_size);
+}
 
 static ht_item *ht_new_item(const char *k, const char *v){
     ht_item *i = malloc(sizeof(ht_item));
@@ -107,8 +147,6 @@ char *ht_search(ht_hash_table *ht, const char *key){
     return NULL;
 }
 
-static ht_item HT_DELETED_ITEM = {NULL, NULL};
-
 void ht_delete(ht_hash_table *ht, const char *key){
     const int load = ht->count * 100 / ht->size;
     if (load < 10) {
@@ -130,42 +168,4 @@ void ht_delete(ht_hash_table *ht, const char *key){
         i++;
     }
     ht->count--;
-}
-
-static void ht_resize(ht_hash_table* ht, const int base_size) {
-    if (base_size < HT_INITIAL_BASE_SIZE) {
-        return;
-    }
-    ht_hash_table* new_ht = ht_new_sized(base_size);
-    for (int i = 0; i < ht->size; i++) {
-        ht_item* item = ht->items[i];
-        if (item != NULL && item != &HT_DELETED_ITEM) {
-            ht_insert(new_ht, item->key, item->value);
-        }
-    }
-
-    ht->base_size = new_ht->base_size;
-    ht->count = new_ht->count;
-
-    // To delete new_ht, we give it ht's size and items 
-    const int tmp_size = ht->size;
-    ht->size = new_ht->size;
-    new_ht->size = tmp_size;
-
-    ht_item** tmp_items = ht->items;
-    ht->items = new_ht->items;
-    new_ht->items = tmp_items;
-
-    ht_del_hash_table(new_ht);
-}
-
-static void ht_resize_up(ht_hash_table* ht) {
-    const int new_size = ht->base_size * 2;
-    ht_resize(ht, new_size);
-}
-
-
-static void ht_resize_down(ht_hash_table* ht) {
-    const int new_size = ht->base_size / 2;
-    ht_resize(ht, new_size);
 }

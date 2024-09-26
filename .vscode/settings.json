@@ -4,6 +4,7 @@
         "cstdlib": "c",
         "*.tcc": "c",
         "memory": "c",
-        "new": "c"
+        "new": "c",
+        "stdio.h": "c"
     }
 }
